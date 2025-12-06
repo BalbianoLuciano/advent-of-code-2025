@@ -66,91 +66,49 @@ console.log(`Total de jolts (Parte 1): ${totalJolts}`);
 // Leer el archivo de input nuevamente
 const input2 = fs.readFileSync('input.txt', 'utf8').trim().split('\n');
 
-// Función para encontrar las posiciones de las columnas usando los operadores
-function findColumnPositions(lines) {
-    const operatorLine = lines[lines.length - 1]; // Última línea con operadores
-    const positions = [];
+// Variable global para sumar todos los valores máximos (parte 2)
+let totalJolts2 = 0;
 
-    for (let i = 0; i < operatorLine.length; i++) {
-        if (operatorLine[i] === '*' || operatorLine[i] === '+') {
-            positions.push(i);
-        }
-    }
+// Procesar cada banco de baterías (hasta 12 dígitos)
+for (let bank of input2) {
+    const digits = bank.split('').map(Number);
+    const targetLength = 12; // Número de dígitos que queremos formar
 
-    return positions;
-}
+    let result = '';
+    let currentIndex = 0; // Índice desde donde buscar
 
-// Función para leer una columna de arriba hacia abajo
-function readColumn(lines, colIndex) {
-    let number = '';
+    // Construir el número dígito por dígito
+    for (let position = 0; position < targetLength; position++) {
+        // Cuántos dígitos más necesitamos después de este
+        const digitsNeeded = targetLength - position - 1;
 
-    // Leer las primeras 3 filas (excluyendo la última que tiene el operador)
-    for (let row = 0; row < lines.length - 1; row++) {
-        const char = lines[row][colIndex];
-        if (char && char.trim() !== '') {
-            number += char;
-        }
-    }
+        // Buscar el dígito más alto que tenga suficientes dígitos a su derecha
+        let bestDigit = -1;
+        let bestIndex = -1;
 
-    return number === '' ? null : parseInt(number);
-}
+        for (let i = currentIndex; i < digits.length; i++) {
+            // Verificar si desde este índice hay suficientes dígitos disponibles
+            const availableAfter = digits.length - i - 1;
 
-// Función para resolver un problema
-function solveProblem(lines, colPositions) {
-    const problems = [];
-
-    // Para cada posición de operador
-    for (let i = 0; i < colPositions.length; i++) {
-        const colIndex = colPositions[i];
-        const operator = lines[lines.length - 1][colIndex];
-        const numbers = [];
-
-        // Buscar todas las columnas que pertenecen a este problema
-        // Las columnas van desde la posición del operador anterior + 1 hasta esta posición
-        const startCol = i === 0 ? 0 : colPositions[i - 1] + 1;
-        const endCol = colIndex;
-
-        // Leer cada columna del problema
-        for (let col = startCol; col <= endCol; col++) {
-            const num = readColumn(lines, col);
-            if (num !== null) {
-                numbers.push(num);
+            if (availableAfter >= digitsNeeded) {
+                if (digits[i] > bestDigit) {
+                    bestDigit = digits[i];
+                    bestIndex = i;
+                }
             }
         }
 
-        // Invertir para leer de derecha a izquierda
-        numbers.reverse();
-
-        // Calcular el resultado
-        let result = numbers[0];
-        for (let j = 1; j < numbers.length; j++) {
-            if (operator === '*') {
-                result *= numbers[j];
-            } else {
-                result += numbers[j];
-            }
-        }
-
-        problems.push(result);
-    }
-
-    return problems;
-}
-
-// Dividir el input en grupos de 4 líneas (3 de números + 1 de operadores)
-let totalPart2 = 0;
-for (let i = 0; i < input2.length; i += 4) {
-    const problemLines = input2.slice(i, i + 4);
-
-    if (problemLines.length === 4) {
-        const colPositions = findColumnPositions(problemLines);
-        const results = solveProblem(problemLines, colPositions);
-
-        // Sumar todos los resultados de este grupo
-        for (let result of results) {
-            totalPart2 += result;
+        // Si encontramos un dígito válido, lo agregamos
+        if (bestDigit !== -1) {
+            result += bestDigit;
+            currentIndex = bestIndex + 1; // Siguiente búsqueda empieza después de este
+        } else {
+            // No hay suficientes dígitos, terminamos
+            break;
         }
     }
+
+    totalJolts2 += parseInt(result);
 }
 
-console.log(`Total de jolts (Parte 2): ${totalPart2}`);
+console.log(`Total de jolts (Parte 2): ${totalJolts2}`);
